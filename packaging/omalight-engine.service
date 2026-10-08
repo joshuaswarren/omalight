@@ -1,0 +1,10 @@
+[Unit]
+Description=Omalight LightCraft engine
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/omalight-engine
+Restart=on-failure
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,53 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/omalight-protocol",
+    "crates/omalight-core",
+    "apps/omalight",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/joshuaswarren/omalight"
+homepage = "https://github.com/joshuaswarren/omalight"
+rust-version = "1.90"
+publish = false
+authors = ["Joshua Warren"]
+
+[workspace.dependencies]
+omalight-protocol = { path = "crates/omalight-protocol" }
+omalight-core = { path = "crates/omalight-core" }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+toml = "0.8"
+log = "0.4"
+env_logger = "0.11"
+jpeg-encoder = { version = "0.7", default-features = false, features = ["std"] }
+zune-jpeg = { version = "0.5", default-features = false, features = ["std"] }
+zune-core = { version = "0.5", default-features = false, features = ["std"] }
+png = "0.18"
+ureq = { version = "2", default-features = false, features = ["json", "tls"] }
+# Pinned revision. Cargo rewrites LightCraft's path dependencies inside this git repo.
+lightcraft-engine = { git = "https://github.com/storytold/lightcraft", rev = "eba0b9723bfa0903a319879af854c46b9804f153" }
+lightcraft-raw = { git = "https://github.com/storytold/lightcraft", rev = "eba0b9723bfa0903a319879af854c46b9804f153" }
+lightcraft-raster = { git = "https://github.com/storytold/lightcraft", rev = "eba0b9723bfa0903a319879af854c46b9804f153" }
+
+# The develop pipeline is per-pixel. opt-level 0 makes the tests look hung.
+[profile.dev]
+opt-level = 1
+
+[profile.dev.package."*"]
+opt-level = 2
+
+[profile.test]
+opt-level = 1
+
+[profile.test.package."*"]
+opt-level = 2
+
+[profile.release]
+lto = "thin"
+codegen-units = 1

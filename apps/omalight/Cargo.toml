@@ -1,0 +1,39 @@
+[package]
+name = "omalight"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+rust-version.workspace = true
+publish.workspace = true
+description = "Omalight window, engine daemon, and MCP server"
+
+[dependencies]
+omalight-core = { workspace = true }
+omalight-protocol = { workspace = true }
+serde_json = { workspace = true }
+# 0.33 is the newest egui that builds on Rust 1.90, which is LightCraft's floor.
+eframe = "0.33"
+egui = "0.33"
+env_logger = { workspace = true }
+
+[lib]
+name = "omalight_app"
+path = "src/lib.rs"
+
+[[bin]]
+name = "omalight"
+path = "src/bin/omalight.rs"
+
+[[bin]]
+name = "omalight-engine"
+path = "src/bin/engine.rs"
+
+[[bin]]
+name = "omalight-mcp"
+path = "src/bin/mcp.rs"
+
+[dev-dependencies]
+omalight-core = { workspace = true }
+serde_json = { workspace = true }

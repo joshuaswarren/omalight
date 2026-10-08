@@ -1,0 +1,9 @@
+/target
+/agent-tools
+**/*.rs.bk
+Cargo.lock.bak
+*.swp
+.DS_Store
+.env
+.env.*
+*.pem

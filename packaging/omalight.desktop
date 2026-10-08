@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Omalight
+GenericName=Photo developer
+Comment=Develop raw photos against a local or remote LightCraft engine
+Exec=omalight %f
+Icon=omalight
+Terminal=false
+Categories=Graphics;Photography;RasterGraphics;
+StartupWMClass=omalight
+MimeType=image/x-adobe-dng;image/x-sony-arw;image/jpeg;image/png;image/tiff;

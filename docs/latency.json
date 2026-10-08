@@ -1,0 +1,34 @@
+{
+  "pipeline": "lightcraft-cpu",
+  "profile": "debug, dependencies opt-level 2",
+  "viewport": [1280, 800],
+  "note": "One localhost run. Times are microseconds. Full size follows the viewport, so a small DNG is scaled up.",
+  "runs": [
+    {
+      "source": "128x96",
+      "ping_us": 283,
+      "open_us": 1531,
+      "draft_us": 6050,
+      "draft_px": [267, 200],
+      "full_us": 65520,
+      "full_px": [1067, 800],
+      "preview_rtt_us": 90915,
+      "export_long_edge": 256,
+      "export_server_us": 1628,
+      "export_us": 1928
+    },
+    {
+      "source": "640x480",
+      "ping_us": 252,
+      "open_us": 1629,
+      "draft_us": 11276,
+      "draft_px": [267, 200],
+      "full_us": 75395,
+      "full_px": [1067, 800],
+      "preview_rtt_us": 106537,
+      "export_long_edge": 256,
+      "export_server_us": 7252,
+      "export_us": 8007
+    }
+  ]
+}

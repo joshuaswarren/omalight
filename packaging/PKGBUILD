@@ -1,0 +1,32 @@
+# Maintainer: Joshua Warren
+pkgname=omalight
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Omarchy photo developer with a remote LightCraft engine"
+arch=('x86_64' 'aarch64')
+url="https://github.com/joshuaswarren/omalight"
+license=('MIT OR Apache-2.0')
+depends=('gcc-libs' 'libwayland' 'libxkbcommon')
+makedepends=('cargo' 'rust' 'pkgconf' 'git')
+source=("${pkgname}::git+https://github.com/joshuaswarren/omalight.git")
+sha256sums=('SKIP')
+options=('!lto')
+
+build() {
+  cd "${pkgname}"
+  export CARGO_TARGET_DIR="${srcdir}/target"
+  cargo build --release --locked -p omalight
+}
+
+package() {
+  cd "${pkgname}"
+  install -Dm755 "${srcdir}/target/release/omalight" "${pkgdir}/usr/bin/omalight"
+  install -Dm755 "${srcdir}/target/release/omalight-engine" "${pkgdir}/usr/bin/omalight-engine"
+  install -Dm755 "${srcdir}/target/release/omalight-mcp" "${pkgdir}/usr/bin/omalight-mcp"
+  install -Dm644 packaging/omalight.desktop "${pkgdir}/usr/share/applications/omalight.desktop"
+  install -Dm644 packaging/omalight.svg "${pkgdir}/usr/share/icons/hicolor/scalable/apps/omalight.svg"
+  install -Dm644 skills/omalight/SKILL.md "${pkgdir}/usr/share/omalight/skills/omalight/SKILL.md"
+  install -Dm644 packaging/omalight-engine.service "${pkgdir}/usr/lib/systemd/user/omalight-engine.service"
+  install -Dm644 LICENSE-MIT "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE-MIT"
+  install -Dm644 LICENSE-APACHE "${pkgdir}/usr/share/licenses/${pkgname}/LICENSE-APACHE"
+}

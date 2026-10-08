@@ -1,0 +1,37 @@
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.90.0
+        with:
+          components: rustfmt, clippy
+      - name: wayland client libraries
+        run: sudo apt-get update && sudo apt-get install -y libwayland-dev libxkbcommon-dev libegl1-mesa-dev pkg-config
+      - name: fmt
+        run: cargo fmt --all -- --check
+      - name: clippy
+        run: cargo clippy --workspace --all-targets --locked -- -D warnings
+        env:
+          CARGO_BUILD_JOBS: "2"
+          LIGHTCRAFT_GPU: "0"
+      - name: test
+        run: LIGHTCRAFT_GPU=0 cargo test --workspace --locked
+        env:
+          CARGO_BUILD_JOBS: "2"
+
+  macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@1.90.0
+      - name: build
+        run: cargo build --locked -p omalight
+        env:
+          CARGO_BUILD_JOBS: "2"
