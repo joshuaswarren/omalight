@@ -14,6 +14,10 @@ The engine runs on the machine that holds the photos. The window runs on the Oma
 
 A Tailscale name works the same as any other hostname.
 
+Restrict engine access to trusted peers. The TCP transport has no TLS.
+Use a private network or an encrypted tunnel; do not expose port 7421 to an untrusted network.
+See [the network boundary](docs/ARCHITECTURE.md#network-boundary) before running a remote engine.
+
 ### Engine on macOS
 
 Xcode command line tools, and Rust 1.90 or newer:
@@ -104,6 +108,20 @@ omalight --headless --connect 127.0.0.1:7421 \
   --export /tmp/out.jpg --latency-json /tmp/latency.json
 ```
 
+### Files on a remote engine
+
+`--open` and `--export` use paths on the engine machine, not the laptop.
+The engine must be able to read the original. Pairing does not upload files.
+An export creates missing parent directories and overwrites an existing destination without a prompt.
+
+Use `mode = "remote"` when the library exists only on the remote engine.
+The default `auto` mode can start a local engine when no remote engine is available.
+That local engine cannot read a path that exists only on the remote machine.
+
+The daemon shares its catalog, active photo and undo state across connections.
+Use one editor per daemon until committed preview edits target their requested photo independently.
+See [filesystem ownership](docs/ARCHITECTURE.md#filesystem-and-session-ownership) for the MCP path rules.
+
 ## Build
 
 Rust 1.90 or newer. Wayland and X11 client libraries, used by eframe:
@@ -141,7 +159,13 @@ omalight skill --link
 | ctrl-z / ctrl-shift-z | Undo / redo |
 | esc | Close the palette or the key list |
 
-Drop a DNG, ARW, JPEG, TIFF, or PNG on the window to open it. The palette takes a sentence ("warm these portraits slightly and export 2048 px JPEGs") and turns it into engine commands. With `[ai]` set, the sentence goes to that OpenAI-compatible server first. The rule parser covers the short cases when the server is absent.
+Drop a DNG, ARW, JPEG, TIFF, or PNG on the window to open it.
+The palette takes a sentence, such as "warm these portraits slightly", and turns it into engine commands.
+With `[ai]` set, the sentence goes to that OpenAI-compatible server first.
+The rule parser handles short cases when the server is absent.
+
+Apply exposure or temperature changes and wait for the preview before exporting.
+Combined GUI edit/export plans currently export before those slider changes reach the engine.
 
 Agents use `omalight-mcp` and `skills/omalight/SKILL.md`.
 
