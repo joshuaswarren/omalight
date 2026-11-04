@@ -34,7 +34,26 @@ The length counts version, kind, id, and payload. The cap is 32 MiB. Command pay
 
 Kinds: hello, hello-ok, ping, pong, command, command-result, preview, preview-image, export, export-result, error, cancel, open, open-result, pair-start, pair-offer, pair-confirm, pair-result.
 
-QUIC and WebSocket were the other candidates. WebSocket adds an HTTP upgrade and client-side masking on a stream that is already binary. A second cryptographic handshake on every connection does not change who is allowed to send a develop command; pairing does that once. TCP keeps one socket, small writes, and JPEGs copied as-is. The client is given `host:port`. The system resolver does the lookup, so a MagicDNS name and any other hostname take the same path.
+The client takes `host:port`. The system resolver handles the lookup.
+A MagicDNS name and any other hostname use the same resolver path.
+
+### Network boundary
+
+The default listener binds `0.0.0.0:7421`, which accepts connections on every IPv4 interface.
+It advertises over mDNS unless `--no-mdns` is set or the bind address is loopback.
+Discovery does not authenticate an engine.
+
+The transport is plain TCP. It does not encrypt credentials, commands, photo paths or preview images.
+Pairing does not add transport encryption or make an untrusted network safe.
+Restrict network access to trusted peers and use an encrypted overlay or tunnel when traffic crosses other networks.
+
+For a manually started engine that needs only local clients:
+
+```sh
+omalight-engine --bind 127.0.0.1:7421 --no-mdns
+```
+
+This changes that process's listener, not the installed service configuration.
 
 ## Auth
 
@@ -49,6 +68,29 @@ On Linux, a loopback connection from the same uid (`SO_PEERCRED`) with `hello.lo
 The engine advertises `_omalight._tcp` when it is not bound to loopback. The window browses that type and lists what it finds. It does not pair with the first answer on its own.
 
 Commands before a successful `hello` are refused. `pair-start` is the only unauthenticated first frame, and it cannot open or edit a photo.
+
+## Filesystem and session ownership
+
+The protocol carries paths, not original photo uploads or exported image downloads.
+The process that handles a path determines its filesystem and permissions:
+
+| Operation | Filesystem | Behavior |
+| --- | --- | --- |
+| GUI file argument/drop, headless `--open`, MCP `open_photo.path` | Engine | Reads the original from the supplied path |
+| GUI export, headless `--export`, MCP `export_jpeg.dest` | Engine | Creates missing parent directories and writes the exported image |
+| MCP `preview.path` | MCP process | Writes the preview JPEG received over the connection |
+
+Relative paths resolve from that process's working directory.
+The same path text can refer to different files on the laptop and engine.
+A remote GUI file drop works only when the engine can read the dropped path.
+
+Exports use `std::fs::write`: an existing destination is truncated before the new bytes are written.
+The export path is not restricted to a library directory.
+Choose a new destination if an earlier export must be preserved.
+
+Connections share the catalog, selection, develop interactions and undo state described above.
+A device credential does not create a separate editing session or filesystem sandbox.
+The README lists the current single-editor limit.
 
 ## Latency
 
@@ -76,15 +118,27 @@ Theme files, first hit wins:
 
 Canonical keys are `background`, `foreground`, `accent`, `red`, `muted`. Legacy `bg` and `fg` are accepted. The watcher polls modification times every 400 ms. With no Omarchy theme on the machine, the built-in dark palette is used.
 
-Keys are in the README. There is no file dialog; drop a file or pass a path. Export writes on the engine host and calls `notify-send` when that binary is on `PATH`.
+Keys are in the README. There is no file dialog; drop a file or pass a path that the engine can read.
+The window reports the engine's returned export path.
 
 `omalight --screenshot DIR` forces a local engine, opens a generated 480×320 DNG, waits for the full preview, and writes `develop.png` and `palette.png`.
 
 ## AI and MCP
 
-`omalight-mcp` is a Content-Length JSON-RPC process on stdio (the same framing as LSP). It uses the same pairing file as the window, and it can spawn a local engine. Tools are listed in `skills/omalight/SKILL.md`. Preview JPEGs are written to a path the caller gives. They are not embedded in the JSON-RPC message.
+`omalight-mcp` is a Content-Length JSON-RPC process on stdio, with the same framing as LSP.
+It uses the window's pairing file and can spawn a local engine.
+Tools are listed in `skills/omalight/SKILL.md`.
+Preview JPEGs use the caller's output path on the MCP filesystem, as described above.
+They are not embedded in the JSON-RPC message.
 
-The command palette calls `plan_request`. If `[ai] base_url` is set, that is an OpenAI-compatible `POST {base}/chat/completions` with temperature 0. The model must return one JSON plan. If the call fails, or no endpoint is configured, a small rule parser handles sentences it recognises ("warm these portraits slightly and export 2048 px JPEGs" sets `wb.temp` to 5600 and exports a 2048 px JPEG). The plan is shown before it runs. Running it sends engine commands. Exposure and temperature come back as slider values so the next preview matches. Undo is `edit.undo`.
+The command palette calls `plan_request`.
+With `[ai] base_url` set, it sends an OpenAI-compatible `POST {base}/chat/completions` with temperature 0.
+The model must return one JSON plan.
+If the request fails or no endpoint is configured, a rule parser handles sentences it recognises.
+Running the plan sends engine commands.
+
+The GUI worker defers exposure and temperature to a slider update after its plan loop.
+The README explains the resulting edit/export ordering limit. Undo uses `edit.undo`.
 
 Heavy work is supposed to run on the engine host, next to the originals. `omalight.task` dispatches:
 
